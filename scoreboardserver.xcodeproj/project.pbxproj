@@ -7,8 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		C87DD17F196E059300F7B1F8 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C87DD17E196E059300F7B1F8 /* main.cpp */; };
-		C87DD181196E059300F7B1F8 /* scoreboardserver.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C87DD180196E059300F7B1F8 /* scoreboardserver.1 */; };
+		C87DD189196E061200F7B1F8 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C87DD187196E061200F7B1F8 /* main.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -18,7 +17,6 @@
 			dstPath = /usr/share/man/man1/;
 			dstSubfolderSpec = 0;
 			files = (
-				C87DD181196E059300F7B1F8 /* scoreboardserver.1 in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -26,8 +24,8 @@
 
 /* Begin PBXFileReference section */
 		C87DD17B196E059300F7B1F8 /* scoreboardserver */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = scoreboardserver; sourceTree = BUILT_PRODUCTS_DIR; };
-		C87DD17E196E059300F7B1F8 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		C87DD180196E059300F7B1F8 /* scoreboardserver.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = scoreboardserver.1; sourceTree = "<group>"; };
+		C87DD187196E061200F7B1F8 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = src/main.cpp; sourceTree = SOURCE_ROOT; };
+		C87DD188196E061200F7B1F8 /* scoreboardserver.1 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.man; name = scoreboardserver.1; path = src/scoreboardserver.1; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,8 +58,8 @@
 		C87DD17D196E059300F7B1F8 /* scoreboardserver */ = {
 			isa = PBXGroup;
 			children = (
-				C87DD17E196E059300F7B1F8 /* main.cpp */,
-				C87DD180196E059300F7B1F8 /* scoreboardserver.1 */,
+				C87DD187196E061200F7B1F8 /* main.cpp */,
+				C87DD188196E061200F7B1F8 /* scoreboardserver.1 */,
 			);
 			path = scoreboardserver;
 			sourceTree = "<group>";
@@ -117,7 +115,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C87DD17F196E059300F7B1F8 /* main.cpp in Sources */,
+				C87DD189196E061200F7B1F8 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -6,7 +6,6 @@
 //  Copyright (c) 2014 churchofrobotron. All rights reserved.
 //
 
-// TODO:  Thread sync on response string
 // TODO:  Photo
 // TODO:  Date/time/machine
 
@@ -18,11 +17,15 @@
 
 #include <unistd.h>
 #include <pthread.h>
+#include <semaphore.h>
+
 #include "dirent.h"
 
 #include "mongoose.h"
 
 using namespace std;
+
+const int SEMAPHORE_COUNT = 16;
 
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
   std::stringstream ss(s);
@@ -141,6 +144,7 @@ pthread_mutex_t newScoreMutex;
 string responseA, responseB;
 string* currentResponse = &responseA;
 string* oldResponse = &responseB;
+sem_t* responseSemaphore;
 
 void generateResponse()
 {
@@ -153,8 +157,17 @@ void generateResponse()
                   "Content-Length: ";
   *oldResponse += to_string(content.size()) + "\r\n\r\n";
   *oldResponse += content;
+  for (int i = 0; i < SEMAPHORE_COUNT; i++)
+  {
+    int res = sem_wait(responseSemaphore);
+    int count;
+    sem_getvalue(responseSemaphore, &count);
+    printf("res: %d, count: %d\n", res, count);
+  }
   // response mutex/semaphore
   swap(oldResponse, currentResponse);
+  for (int i = 0; i < SEMAPHORE_COUNT; i++)
+    sem_post(responseSemaphore);
 }
 
 void initScores()
@@ -204,7 +217,12 @@ static void *callback(enum mg_event event,
     {
       if (!strcmp(req->request_method, "GET"))
       {
-        mg_printf(conn, currentResponse->c_str());
+        sem_wait(responseSemaphore);
+        // Make a copy, I don't know how much work happens in mg_printf, so copying allows us to ensure we don't
+        // hold the semaphore open too long
+        string response = *currentResponse;
+        sem_post(responseSemaphore);
+        mg_printf(conn, response.c_str());
       }
       if (!strcmp(req->request_method, "POST"))
       {
@@ -332,6 +350,8 @@ struct mg_context* smContext = NULL;
 int main(int argc, const char * argv[])
 {
   pthread_mutex_init(&newScoreMutex, NULL);
+  sem_unlink("cor_response_semaphore");
+  responseSemaphore = sem_open("cor_response_semaphore", O_CREAT, 0644, SEMAPHORE_COUNT);
   
   initScores();
   
@@ -345,5 +365,7 @@ int main(int argc, const char * argv[])
   }
   
   pthread_mutex_destroy(&newScoreMutex);
+  sem_destroy(responseSemaphore);
+  
   return 0;
 }

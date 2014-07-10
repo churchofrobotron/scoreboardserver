@@ -6,7 +6,10 @@
 //  Copyright (c) 2014 churchofrobotron. All rights reserved.
 //
 
-// TODO: POST SCORES VIA WEB, UPDATE SHIZ
+// TODO:  Thread sync on response string
+// TODO:  Thread sync on newscores
+// TODO:  Photo
+// TODO:  Date/time/machine
 
 #include <string>
 #include <deque>
@@ -41,7 +44,7 @@ struct PlayerScore
 {
   string mInitials;
   int mScore;
-  
+
   string toJSON() const;
 };
 
@@ -59,7 +62,7 @@ typedef std::deque<PlayerScore> PlayerScores;
 PlayerScores getScores()
 {
   PlayerScores ret;
- 
+
   DIR *dirp = opendir("/Users/bzztbomb/projects/churchOfRobotron/scoreboardserver/www/scores/");
   struct dirent * dp;
   while ((dp = readdir(dirp)) != NULL) {
@@ -110,7 +113,7 @@ string scoresToJSON(const PlayerScores& scores)
 string scoreSummary(const PlayerScores& allTime, const PlayerScores& lastDay, const PlayerScores& mostRecent)
 {
   string ret = "{";
-  
+
   ret += "\"alltime\" : \n" + scoresToJSON(allTime) + ",\n";
   ret += "\"lastday\" : \n" + scoresToJSON(lastDay) + ",\n";
   ret += "\"mostrecent\" : \n" + scoresToJSON(mostRecent);
@@ -125,30 +128,43 @@ struct CurrentScores
   PlayerScores mAllTime;
   PlayerScores mLastDay;
   PlayerScores mMostRecent;
-  uint mTimestamp;
-  
+
   CurrentScores()
-  : mTimestamp(0)
   {
-    
+
   }
 };
 
-uint currentTime = 0;
-CurrentScores a, b;
-CurrentScores* currentScores = &a;
-CurrentScores* oldScores = &b;
-
+CurrentScores currentScores;
 PlayerScores newScores;
+
+string responseA, responseB;
+string* currentResponse = &responseA;
+string* oldResponse = &responseB;
+
+void generateResponse()
+{
+  string content = scoreSummary(currentScores.mAllTime,
+                                currentScores.mLastDay,
+                                currentScores.mMostRecent);
+  *oldResponse =
+                  "HTTP/1.1 200 OK\r\n"
+                  "Content-Type: application/json\r\n"
+                  "Content-Length: ";
+  *oldResponse += to_string(content.size()) + "\r\n\r\n";
+  *oldResponse += content;
+  // response mutex/semaphore
+  swap(oldResponse, currentResponse);
+}
 
 void initScores()
 {
-  currentScores->mTimestamp = currentTime;
   PlayerScores allScores = getScores();
-  currentScores->mAllScores = allScores;
-  currentScores->mAllTime = getTop(allScores, 20);
-  currentScores->mLastDay = currentScores->mAllTime;
-  currentScores->mMostRecent = currentScores->mAllTime;
+  currentScores.mAllScores = allScores;
+  currentScores.mAllTime = getTop(allScores, 20);
+  currentScores.mLastDay = currentScores.mAllTime;
+  currentScores.mMostRecent = currentScores.mAllTime;
+  generateResponse();
 }
 
 void addTopScore(PlayerScores* scores, PlayerScore score)
@@ -165,21 +181,17 @@ void addTopScore(PlayerScores* scores, PlayerScore score)
 
 void updateScores()
 {
-  if (currentScores->mTimestamp == currentTime)
-    return;
-  uint newTime = currentTime;
-  *oldScores = *currentScores;
+  // newScores mutex
   while (newScores.size())
   {
     PlayerScore s = *newScores.begin();
     newScores.pop_front();
-    addTopScore(&oldScores->mAllTime, s);
-    addTopScore(&oldScores->mLastDay, s);
-    oldScores->mMostRecent.push_front(s);
-    oldScores->mMostRecent.pop_back();
+    addTopScore(&currentScores.mAllTime, s);
+    addTopScore(&currentScores.mLastDay, s);
+    currentScores.mMostRecent.push_front(s);
+    currentScores.mMostRecent.pop_back();
   }
-  oldScores->mTimestamp = newTime;
-  std::swap(currentScores, oldScores);
+  generateResponse();
 }
 
 static const char handled_char = ' ';
@@ -194,42 +206,32 @@ static void *callback(enum mg_event event,
     {
       if (!strcmp(req->request_method, "GET"))
       {
-        string content = scoreSummary(currentScores->mAllTime,
-                                      currentScores->mLastDay,
-                                      currentScores->mMostRecent);
-        mg_printf(conn,
-                  "HTTP/1.1 200 OK\r\n"
-                  "Content-Type: application/json\r\n"
-                  "Content-Length: %lu\r\n"        // Always set Content-Length
-                  "\r\n"
-                  "%s",
-                  content.size(), content.c_str());
+        mg_printf(conn, currentResponse->c_str());
       }
       if (!strcmp(req->request_method, "POST"))
       {
         char post_data[1024],
         input1[sizeof(post_data)], input2[sizeof(post_data)];
         int post_data_len;
-        
+
         // Read POST data
         post_data_len = mg_read(conn, post_data, sizeof(post_data));
-        
+
         // Parse form data. input1 and input2 are guaranteed to be NUL-terminated
         mg_get_var(post_data, post_data_len, "initials", input1, sizeof(input1));
         mg_get_var(post_data, post_data_len, "score", input2, sizeof(input2));
-        
+
         bool error = false;
         try {
           PlayerScore ps;
           ps.mInitials = input1;
           ps.mScore = stoi(input2);
           newScores.push_back(ps);
-          currentTime++;
           updateScores();
         } catch (...) {
           error = true;
         }
-        
+
         mg_printf(conn, "HTTP/1.0 200 OK\r\n"
                   "Content-Type: text/plain\r\n\r\n"
                   "Submitted data: [%.*s]\n"
@@ -300,7 +302,7 @@ static void *callback(enum mg_event event, struct mg_connection *conn) {
         "<input type=\"file\" name=\"file\" /> <br/>"
         "<input type=\"submit\" value=\"Upload\" />"
         "</form><br/><br/>Select skin:<br/><ul>";
-        
+
         NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
         NSDictionary* skins = DJSkin::getSkinFiles();
         NSArray* skinNames = [[skins allKeys] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
@@ -311,7 +313,7 @@ static void *callback(enum mg_event event, struct mg_connection *conn) {
         }
         [pool release];
         page += "</ul></body></html>";
-        
+
         mg_printf(conn, "HTTP/1.0 200 OK\r\n"
                   "Content-Length: %d\r\n"
                   "Content-Type: text/html\r\n\r\n%s",
@@ -323,7 +325,7 @@ static void *callback(enum mg_event event, struct mg_connection *conn) {
   } else if (event == MG_UPLOAD) {
     mg_printf(conn, "Saved [%s]\n\n", mg_get_request_info(conn)->ev_data);
   }
-  
+
   return NULL;
 }
 #endif
@@ -333,7 +335,6 @@ struct mg_context* smContext = NULL;
 int main(int argc, const char * argv[])
 {
   initScores();
-  
   const char *options[] = {
     "listening_ports", "12084",
     "document_root", "/Users/bzztbomb/projects/churchOfRobotron/scoreboardserver/www",

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		C87DD189196E061200F7B1F8 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C87DD187196E061200F7B1F8 /* main.cpp */; };
+		C87DD18D196E06CE00F7B1F8 /* mongoose.c in Sources */ = {isa = PBXBuildFile; fileRef = C87DD18B196E06CE00F7B1F8 /* mongoose.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -26,6 +27,8 @@
 		C87DD17B196E059300F7B1F8 /* scoreboardserver */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = scoreboardserver; sourceTree = BUILT_PRODUCTS_DIR; };
 		C87DD187196E061200F7B1F8 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = src/main.cpp; sourceTree = SOURCE_ROOT; };
 		C87DD188196E061200F7B1F8 /* scoreboardserver.1 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.man; name = scoreboardserver.1; path = src/scoreboardserver.1; sourceTree = SOURCE_ROOT; };
+		C87DD18B196E06CE00F7B1F8 /* mongoose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mongoose.c; path = lib/mongoose/mongoose.c; sourceTree = "<group>"; };
+		C87DD18C196E06CE00F7B1F8 /* mongoose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mongoose.h; path = lib/mongoose/mongoose.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,6 +45,7 @@
 		C87DD172196E059300F7B1F8 = {
 			isa = PBXGroup;
 			children = (
+				C87DD18A196E06BE00F7B1F8 /* mongoose */,
 				C87DD17D196E059300F7B1F8 /* scoreboardserver */,
 				C87DD17C196E059300F7B1F8 /* Products */,
 			);
@@ -62,6 +66,15 @@
 				C87DD188196E061200F7B1F8 /* scoreboardserver.1 */,
 			);
 			path = scoreboardserver;
+			sourceTree = "<group>";
+		};
+		C87DD18A196E06BE00F7B1F8 /* mongoose */ = {
+			isa = PBXGroup;
+			children = (
+				C87DD18B196E06CE00F7B1F8 /* mongoose.c */,
+				C87DD18C196E06CE00F7B1F8 /* mongoose.h */,
+			);
+			name = mongoose;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -115,6 +128,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C87DD18D196E06CE00F7B1F8 /* mongoose.c in Sources */,
 				C87DD189196E061200F7B1F8 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

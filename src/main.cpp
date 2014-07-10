@@ -7,7 +7,6 @@
 //
 
 // TODO:  Thread sync on response string
-// TODO:  Thread sync on newscores
 // TODO:  Photo
 // TODO:  Date/time/machine
 
@@ -18,6 +17,7 @@
 #include <vector>
 
 #include <unistd.h>
+#include <pthread.h>
 #include "dirent.h"
 
 #include "mongoose.h"
@@ -136,7 +136,7 @@ struct CurrentScores
 };
 
 CurrentScores currentScores;
-PlayerScores newScores;
+pthread_mutex_t newScoreMutex;
 
 string responseA, responseB;
 string* currentResponse = &responseA;
@@ -179,19 +179,17 @@ void addTopScore(PlayerScores* scores, PlayerScore score)
   }
 }
 
-void updateScores()
+void updateScores(PlayerScore s)
 {
-  // newScores mutex
-  while (newScores.size())
+  if (pthread_mutex_lock(&newScoreMutex) == 0)
   {
-    PlayerScore s = *newScores.begin();
-    newScores.pop_front();
     addTopScore(&currentScores.mAllTime, s);
     addTopScore(&currentScores.mLastDay, s);
     currentScores.mMostRecent.push_front(s);
     currentScores.mMostRecent.pop_back();
+    generateResponse();
+    pthread_mutex_unlock(&newScoreMutex);
   }
-  generateResponse();
 }
 
 static const char handled_char = ' ';
@@ -226,8 +224,7 @@ static void *callback(enum mg_event event,
           PlayerScore ps;
           ps.mInitials = input1;
           ps.mScore = stoi(input2);
-          newScores.push_back(ps);
-          updateScores();
+          updateScores(ps);
         } catch (...) {
           error = true;
         }
@@ -334,7 +331,10 @@ struct mg_context* smContext = NULL;
 
 int main(int argc, const char * argv[])
 {
+  pthread_mutex_init(&newScoreMutex, NULL);
+  
   initScores();
+  
   const char *options[] = {
     "listening_ports", "12084",
     "document_root", "/Users/bzztbomb/projects/churchOfRobotron/scoreboardserver/www",
@@ -343,5 +343,7 @@ int main(int argc, const char * argv[])
   while (1) {
     usleep(100000);
   }
+  
+  pthread_mutex_destroy(&newScoreMutex);
   return 0;
 }

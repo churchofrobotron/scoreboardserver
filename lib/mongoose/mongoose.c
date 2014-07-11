@@ -4044,6 +4044,125 @@ static void handle_lsp_request(struct mg_connection *conn, const char *path,
 }
 #endif // USE_LUA
 
+int mg_upload_with_buf(struct mg_connection *conn, const char *destination_dir, char* buf, size_t buf_len) {
+  const char *content_type_header, *boundary_start;
+  char path[PATH_MAX], fname[1024], boundary[100], *s;
+  FILE *fp;
+  int bl, n, i, j, headers_len, boundary_len, len = 0, num_uploaded_files = 0;
+
+  // Request looks like this:
+  //
+  // POST /upload HTTP/1.1
+  // Host: 127.0.0.1:8080
+  // Content-Length: 244894
+  // Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryRVr
+  //
+  // ------WebKitFormBoundaryRVr
+  // Content-Disposition: form-data; name="file"; filename="accum.png"
+  // Content-Type: image/png
+  //
+  //  <89>PNG
+  //  <PNG DATA>
+  // ------WebKitFormBoundaryRVr
+
+  // Extract boundary string from the Content-Type header
+  if ((content_type_header = mg_get_header(conn, "Content-Type")) == NULL ||
+      (boundary_start = strstr(content_type_header, "boundary=")) == NULL ||
+      (sscanf(boundary_start, "boundary=\"%99[^\"]\"", boundary) == 0 &&
+       sscanf(boundary_start, "boundary=%99s", boundary) == 0) ||
+      boundary[0] == '\0') {
+    return num_uploaded_files;
+  }
+
+  boundary_len = strlen(boundary);
+  bl = boundary_len + 4;  // \r\n--<boundary>
+  for (;;) {
+    // Pull in headers
+#if 0
+    assert(len >= 0 && len <= (int) sizeof(buf));
+    while ((n = mg_read(conn, buf + len, sizeof(buf) - len)) > 0) {
+      len += n;
+    }
+    if ((headers_len = get_request_len(buf, buf_len)) <= 0) {
+      break;
+    }
+#endif
+    len = buf_len;
+    headers_len = buf_len;
+    // Fetch file name.
+    fname[0] = '\0';
+    for (i = j = 0; i < headers_len && fname[0] == '\0'; i++) {
+      if (buf[i] == '\r' && buf[i + 1] == '\n') {
+        buf[i] = buf[i + 1] = '\0';
+        // TODO(lsm): don't expect filename to be the 3rd field,
+        // parse the header properly instead.
+        sscanf(&buf[j], "Content-Disposition: %*s %*s filename=\"%1023[^\"]",
+               fname);
+        j = i + 2;
+      }
+    }
+
+    // Give up if the headers are not what we expect
+    if (fname[0] == '\0') {
+      break;
+    }
+
+    // Calculate header
+    for (; j < buf_len - 4; j++)
+    {
+      if ((buf[j] == '\r') && (buf[j+1] == '\n') && (buf[j+2] == '\r') && (buf[j+3] == '\n'))
+        break;
+    }
+    headers_len = j+4;
+
+    // Move data to the beginning of the buffer
+    assert(len >= headers_len);
+    memmove(buf, &buf[headers_len], len - headers_len);
+    len -= headers_len;
+
+    // We open the file with exclusive lock held. This guarantee us
+    // there is no other thread can save into the same file simultaneously.
+    fp = NULL;
+    // Construct destination file name. Do not allow paths to have slashes.
+    if ((s = strrchr(fname, '/')) == NULL) {
+      s = fname;
+    }
+    // Open file in binary mode. TODO: set an exclusive lock.
+    snprintf(path, sizeof(path), "%s/%s", destination_dir, s);
+    if ((fp = fopen(path, "wb")) == NULL) {
+      break;
+    }
+
+    // Read POST data, write into file until boundary is found.
+    n = 0;
+    do {
+      len += n;
+      for (i = 0; i < len - bl; i++) {
+        if (!memcmp(&buf[i], "\r\n--", 4) &&
+            !memcmp(&buf[i + 4], boundary, boundary_len)) {
+          // Found boundary, that's the end of file data.
+          fwrite(buf, 1, i, fp);
+          fflush(fp);
+          num_uploaded_files++;
+          conn->request_info.ev_data = (void *) path;
+          call_user(conn, MG_UPLOAD);
+          memmove(buf, &buf[i + bl], len - (i + bl));
+          len -= i + bl;
+          break;
+        }
+      }
+      if (len > bl) {
+        fwrite(buf, 1, len - bl, fp);
+        memmove(buf, &buf[len - bl], bl);
+        len = bl;
+      }
+    } while ((n = mg_read(conn, buf + len, buf_len - len)) > 0);
+    fclose(fp);
+  }
+
+  return num_uploaded_files;
+}
+
 int mg_upload(struct mg_connection *conn, const char *destination_dir) {
   const char *content_type_header, *boundary_start;
   char buf[MG_BUF_LEN], path[PATH_MAX], fname[1024], boundary[100], *s;

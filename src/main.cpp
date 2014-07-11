@@ -189,10 +189,7 @@ void generateResponse()
   *oldResponse += content;
   for (int i = 0; i < SEMAPHORE_COUNT; i++)
   {
-    int res = sem_wait(responseSemaphore);
-    int count;
-    sem_getvalue(responseSemaphore, &count);
-    printf("res: %d, count: %d\n", res, count);
+    sem_wait(responseSemaphore);
   }
   // response mutex/semaphore
   swap(oldResponse, currentResponse);

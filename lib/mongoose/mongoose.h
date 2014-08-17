@@ -344,7 +344,7 @@ void mg_close_connection(struct mg_connection *conn);
 // Return number of uploaded files.
 int mg_upload(struct mg_connection *conn, const char *destination_dir);
 
-int mg_upload_with_buf(struct mg_connection *conn, const char *destination_dir, char* buf, size_t buf_len);
+int mg_upload_with_buf(struct mg_connection *conn, const char *destination_dir, char* buf, size_t buf_len, const char* target_file);
 
 // Convenience function -- create detached thread.
 // Return: 0 on success, non-0 on error.

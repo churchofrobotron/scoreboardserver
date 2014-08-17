@@ -4044,7 +4044,7 @@ static void handle_lsp_request(struct mg_connection *conn, const char *path,
 }
 #endif // USE_LUA
 
-int mg_upload_with_buf(struct mg_connection *conn, const char *destination_dir, char* buf, size_t buf_len) {
+int mg_upload_with_buf(struct mg_connection *conn, const char *destination_dir, char* buf, size_t buf_len, const char* target_file) {
   const char *content_type_header, *boundary_start;
   char path[PATH_MAX], fname[1024], boundary[100], *s;
   FILE *fp;
@@ -4065,6 +4065,8 @@ int mg_upload_with_buf(struct mg_connection *conn, const char *destination_dir, 
   //  <PNG DATA>
   // ------WebKitFormBoundaryRVr
 
+//  printf(buf);
+  
   // Extract boundary string from the Content-Type header
   if ((content_type_header = mg_get_header(conn, "Content-Type")) == NULL ||
       (boundary_start = strstr(content_type_header, "boundary=")) == NULL ||
@@ -4106,15 +4108,30 @@ int mg_upload_with_buf(struct mg_connection *conn, const char *destination_dir, 
     if (fname[0] == '\0') {
       break;
     }
+    
+    if (target_file)
+    {
+      strcpy(fname, target_file);
+    }
 
     // Calculate header
+    int oj = j;
     for (; j < buf_len - 4; j++)
     {
-      if ((buf[j] == '\r') && (buf[j+1] == '\n') && (buf[j+2] == '\r') && (buf[j+3] == '\n'))
+      if ((buf[j] == 'G') && (buf[j+1] == 'I') && (buf[j+2] == 'F') && (buf[j+3] == '8'))
         break;
     }
-    headers_len = j+4;
-
+//    if (j == buf_len - 4)
+//    {
+//      j = oj;
+//      for (; j < buf_len - 4; j++)
+//      {
+//        if (buf[j] == '\n')
+//          break;
+//      }
+//    }
+    headers_len = j;
+    
     // Move data to the beginning of the buffer
     assert(len >= headers_len);
     memmove(buf, &buf[headers_len], len - headers_len);

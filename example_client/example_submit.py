@@ -2,7 +2,7 @@ import requests
 import datetime
 
 url = "http://localhost:12084/leaderboard/"
-payload = { 'initials': 'BTR', 'score': '1000666', 'date' : datetime.datetime.now().isoformat(), 'altar' : 'OG' }
+payload = { 'initials': 'AAA', 'score': '1000666', 'date' : datetime.datetime.now().isoformat(), 'altar' : 'OG' }
 print payload
 files = { 'file' : open('test.gif', 'rb') }
 

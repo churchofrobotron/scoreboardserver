@@ -31,6 +31,7 @@ using namespace std::chrono;
 
 const int SEMAPHORE_COUNT = 16;
 string document_root = "/Users/bzztbomb/projects/churchOfRobotron/scoreboardserver/www";
+const int RETURN_AMT = 12;
 
 int mg_get_enc_var(const char* data, size_t data_len, const char* name, char* dst, size_t dst_len) {
   char search_buf[64];
@@ -281,7 +282,6 @@ bool last_24(const PlayerScore& a)
 
 void initScores()
 {
-  int RETURN_AMT = 12;
   update_24_point();
   
   PlayerScores allScores = getScores();
@@ -294,7 +294,7 @@ void initScores()
   generateResponse();
 }
 
-void addTopScore(PlayerScores* scores, PlayerScore score)
+void addTopScore(PlayerScores* scores, PlayerScore score, int target_amount)
 {
   auto top_pos = std::lower_bound(scores->begin(), scores->end(), score, [](const PlayerScore& a, const PlayerScore& b) {
     return a.mScore > b.mScore;
@@ -302,7 +302,8 @@ void addTopScore(PlayerScores* scores, PlayerScore score)
   if (top_pos != scores->end())
   {
     scores->insert(top_pos, score);
-    scores->pop_back();
+    while (scores->size() > target_amount)
+      scores->pop_back();
   }
 }
 
@@ -310,8 +311,10 @@ void updateScores(PlayerScore s)
 {
   if (pthread_mutex_lock(&newScoreMutex) == 0)
   {
-    addTopScore(&currentScores.mAllTime, s);
-    addTopScore(&currentScores.mLastDay, s);
+    addTopScore(&currentScores.mAllTime, s, RETURN_AMT);
+    update_24_point();
+    currentScores.mLastDay = getSubset(currentScores.mLastDay, last_24);
+    addTopScore(&currentScores.mLastDay, s, RETURN_AMT);
     currentScores.mMostRecent.push_front(s);
     currentScores.mMostRecent.pop_back();
     generateResponse();

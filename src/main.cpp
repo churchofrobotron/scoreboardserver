@@ -15,13 +15,16 @@
 #include <fstream>
 #include <vector>
 #include <chrono>
+#include <functional>
+#include <algorithm>
 
+#include <fcntl.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
 
 #include <ctime>
-
+#include <cstring>
 #include "dirent.h"
 
 #include "mongoose.h"
@@ -30,7 +33,8 @@ using namespace std;
 using namespace std::chrono;
 
 const int SEMAPHORE_COUNT = 16;
-string document_root = "/Users/bzztbomb/projects/churchOfRobotron/scoreboardserver/www";
+//string document_root = "/Users/bzztbomb/projects/churchOfRobotron/scoreboardserver/www";
+string document_root = "/home/pi/cor/scoreboardserver/www";
 
 int mg_get_enc_var(const char* data, size_t data_len, const char* name, char* dst, size_t dst_len) {
   char search_buf[64];

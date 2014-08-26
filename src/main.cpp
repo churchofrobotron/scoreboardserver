@@ -33,6 +33,8 @@ using namespace std;
 using namespace std::chrono;
 
 const int SEMAPHORE_COUNT = 16;
+const int RETURN_AMT = 12;
+
 //string document_root = "/Users/bzztbomb/projects/churchOfRobotron/scoreboardserver/www";
 string document_root = "/home/pi/cor/scoreboardserver/www";
 
@@ -319,7 +321,8 @@ void updateScores(PlayerScore s)
     currentScores.mLastDay = getSubset(currentScores.mLastDay, last_24);
     addTopScore(&currentScores.mLastDay, s, RETURN_AMT);
     currentScores.mMostRecent.push_front(s);
-    currentScores.mMostRecent.pop_back();
+    while (currentScores.mMostRecent.size() > RETURN_AMT)
+      currentScores.mMostRecent.pop_back();
     generateResponse();
     pthread_mutex_unlock(&newScoreMutex);
   }

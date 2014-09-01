@@ -35,8 +35,8 @@ using namespace std::chrono;
 const int SEMAPHORE_COUNT = 16;
 const int RETURN_AMT = 12;
 
-//string document_root = "/Users/bzztbomb/projects/churchOfRobotron/scoreboardserver/www";
-string document_root = "/home/pi/cor/scoreboardserver/www";
+string document_root = "/Users/bzztbomb/projects/churchOfRobotron/scoreboardserver/www";
+//string document_root = "/home/pi/cor/scoreboardserver/www";
 
 int mg_get_enc_var(const char* data, size_t data_len, const char* name, char* dst, size_t dst_len) {
   char search_buf[64];
@@ -60,6 +60,12 @@ int mg_get_enc_var(const char* data, size_t data_len, const char* name, char* ds
       s += strlen(search_buf);
       while ((s < e) && ((*s == '\r') || (*s == '\n')))
         s++;
+      if (strstr(s, "Content-Type:") == s) {
+        while ((s < e) && ((*s != '\r') && (*s != '\n')))
+          s++;
+        while ((s < e) && ((*s == '\r') || (*s == '\n')))
+          s++;
+      }
       for (len = 0; (s < e) && (len < dst_len - 1) && (*s != '\r') && (*s != '\n'); len++, s++)
         dst[len] = *s;
       dst[len] = '\0';
@@ -354,26 +360,35 @@ static void *callback(enum mg_event event,
         char input2[128];
         char input3[128];
         char input4[128];
+        char input5[128];
 
         int post_data_len;
 
         // Read POST data
         post_data_len = mg_read(conn, post_data, sizeof(post_data));
 
+        std::cout << post_data << std::endl;
+        
         // Parse form data. input1 and input2 are guaranteed to be NUL-terminated
-        mg_get_enc_var(post_data, post_data_len, "initials", input1, sizeof(input1));
-        mg_get_enc_var(post_data, post_data_len, "score", input2, sizeof(input2));
-        mg_get_enc_var(post_data, post_data_len, "date", input3, sizeof(input3));
-        mg_get_enc_var(post_data, post_data_len, "altar", input4, sizeof(input4));
-
+        mg_get_enc_var(post_data, post_data_len, "all_info", input5, sizeof(input5));
+        if (strlen(input5) == 0) {
+          mg_get_enc_var(post_data, post_data_len, "initials", input1, sizeof(input1));
+          mg_get_enc_var(post_data, post_data_len, "score", input2, sizeof(input2));
+          mg_get_enc_var(post_data, post_data_len, "date", input3, sizeof(input3));
+          mg_get_enc_var(post_data, post_data_len, "altar", input4, sizeof(input4));
+        }
+        
         PlayerScore ps;
         bool error = false;
         try {
-          ps.mInitials = input1;
-          ps.mScore = stoi(input2);
-          ps.mDateTime = input3;
-          ps.mAltar = input4;
-          updateScores(ps);
+          if (strlen(input5) == 0) {
+            ps.mInitials = input1;
+            ps.mScore = stoi(input2);
+            ps.mDateTime = input3;
+            ps.mAltar = input4;
+          } else {
+            ps.parseFilename(input5);
+          }
         } catch (...) {
           error = true;
         }
@@ -399,6 +414,7 @@ static void *callback(enum mg_event event,
             std::string response = "OK<br><img src=\"../scores/"+ps.toFilename()+"\">";
             mg_printf(conn, response.c_str(), mg_get_request_info(conn)->ev_data);
           }
+          updateScores(ps);
         }
       }
       // Mark as processed

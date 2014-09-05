@@ -313,9 +313,11 @@ void addTopScore(PlayerScores* scores, PlayerScore score, int target_amount)
   if (top_pos != scores->end())
   {
     scores->insert(top_pos, score);
-    while (scores->size() > target_amount)
-      scores->pop_back();
+  } else {
+    scores->push_back(score);
   }
+  while (scores->size() > target_amount)
+    scores->pop_back();
 }
 
 void updateScores(PlayerScore s)

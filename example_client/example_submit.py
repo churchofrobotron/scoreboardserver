@@ -6,5 +6,9 @@ payload = { 'initials': 'AAA', 'score': '1000666', 'date' : datetime.datetime.no
 print payload
 files = { 'file' : open('test.gif', 'rb') }
 
-r = requests.post(url, data = payload, files = files)
-print r.text
+while (True):
+  r = requests.post(url, data = payload, files = files)
+  print r.text
+
+# r = requests.post(url, data = payload, files = files)
+# print r.text

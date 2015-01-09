@@ -36,6 +36,7 @@ const int SEMAPHORE_COUNT = 16;
 const int RETURN_AMT = 12;
 
 string document_root = "/Users/bzztbomb/projects/churchOfRobotron/scoreboardserver/www";
+//string document_root = "/home/farm/cor/scoreboardserver/www";
 //string document_root = "/home/pi/cor/scoreboardserver/www";
 
 int mg_get_enc_var(const char* data, size_t data_len, const char* name, char* dst, size_t dst_len) {
@@ -368,8 +369,6 @@ static void *callback(enum mg_event event,
 
         // Read POST data
         post_data_len = mg_read(conn, post_data, sizeof(post_data));
-
-        std::cout << post_data << std::endl;
         
         // Parse form data. input1 and input2 are guaranteed to be NUL-terminated
         mg_get_enc_var(post_data, post_data_len, "all_info", input5, sizeof(input5));

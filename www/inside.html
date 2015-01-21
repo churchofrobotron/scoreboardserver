@@ -1,0 +1,73 @@
+<!doctype html>
+<html ng-app="realtime_sb">
+  <head>
+    <meta http-equiv="refresh" content="1320">
+    <script src="angular.min.js"></script>
+    <script src="realtime.js"></script>
+    <script src="jquery-1.7.2.min.js"></script>
+    <script src="inside.js"></script>
+    <style>
+      @font-face {
+        font-family: "robotron";
+        src: url( /location/of/font/FontFileName.eot ); /* IE */
+        src: local("ROBOTRON"), url( ROBOTRON.TTF ) format("truetype"); /* non-IE */
+      }
+      body {
+        font-family: "robotron";
+        margin: 0;
+        color: #00cc00;
+        background-color: #000;
+      }
+
+      .stripe {
+        background-image: url('images/bg.png');
+        background-position: center;
+        background-repeat: repeat-y;
+      }
+
+      .score_type {
+        float: left;
+        width: 30%;
+        margin-left: 25px;
+      }
+      img.death_face {
+        margin: 0 0 35px 0;
+        width : 100px;
+        height : 100px;
+      }
+      .score {
+        float: left;
+        width: 140px;
+      }
+
+      h1 {
+        font-family: "robotron";
+        text-align: left;
+        color: #ffff00;
+      }
+      #video {
+        background-color: black;
+      }
+    </style>
+  </head>
+  <body ng-controller="sb_control" class="stripe">
+    <div id="scoreboard">
+      <div ng-repeat="score_type in sb_data.score_types" class="score_type">
+        <h1>{{score_type.name}}</h1>
+        <div ng-repeat="score in score_type.scores" class="score">
+          <div style="float:left;">{{score.initials}}&nbsp;</div>
+          <div style="clear:left;">{{score.score}}</div>
+          <br>
+          <img class="death_face" src={{score.filename}}></img>
+        </div>
+      </div>
+    </div>
+    <div id="video" width="100%" height="100%" style="display:none">
+      <center>
+      <video width="80%" height="80%" autoplay loop>
+        <source src="http://localhost:8000/consolidated_video.mp4" type="video/mp4">
+      </video>
+    </center>
+    </div>
+  </body>
+</html>

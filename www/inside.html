@@ -14,6 +14,7 @@
       }
       body {
         font-family: "robotron";
+
         margin: 0;
         color: #00cc00;
         background-color: #000;
@@ -24,11 +25,11 @@
         background-position: center;
         background-repeat: repeat-y;
       }
-
       .score_type {
         float: left;
         width: 30%;
         margin-left: 25px;
+
       }
       img.death_face {
         margin: 0 0 35px 0;
@@ -39,14 +40,34 @@
         float: left;
         width: 140px;
       }
-
       h1 {
         font-family: "robotron";
         text-align: left;
         color: #ffff00;
+        height: 2em;
       }
       #video {
         background-color: black;
+      }
+      @media screen and (max-width: 801px) {
+        body {
+          font-size: .75em;
+        }
+        .score {
+          float: left;
+          width: 33%;
+        }
+        img.death_face {
+          margin: 0 0 15px 0;
+          width : 65px;
+          height : 65px;
+        }
+        h1 {
+          height: 3em;
+        }
+        .stripe {
+          background-image: url('images/bg800.png');
+        }
       }
     </style>
   </head>
